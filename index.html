@@ -231,10 +231,12 @@ legend{font-weight:600;font-size:13px;color:var(--mute);margin-bottom:6px;paddin
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
 {
-const JALONS=[
-  {k:'01',lab:'CRVT 1'},{k:'04',lab:'APD'},{k:'06',lab:'CRVT SUIVI'},{k:'08',lab:'CRVT RI'},
-  {k:'10',lab:'ENVOI TRAVAUX'},{k:'12',lab:'DOE'},{k:'13',lab:'DOE RAR'}
-];
+// Jalons connus : nom de tuile et nom utilisé dans le mail. Les autres jalons du fichier ont leur propre tuile automatiquement.
+const KNOWN={CRVT1:{lab:'CRVT 1',mail:'CRVT1'},ETUDEGC:{lab:'ÉTUDE GC',mail:'étude GC'},APD:{lab:'APD',mail:'APD'},
+  CRVTSUIVI:{lab:'CRVT SUIVI',mail:'CRVT suivi'},CRVTRI:{lab:'CRVT RI',mail:'CRVT RI'},ENVOITRAVAUX:{lab:'ENVOI TRAVAUX',mail:'envoi travaux'},
+  DOE:{lab:'DOE',mail:'DOE'},DOERAR:{lab:'DOE RAR',mail:'traitement DOE (RAR)'}};
+const ALIAS={TRAITEMENTDOE:'DOERAR'};
+let JALONS=[];
 const DEFAULT_MAP=`0144;SOGETREL
 0230;AIR
 0231;AIR
@@ -272,14 +274,17 @@ let mapText=store.get('caffMap')||DEFAULT_MAP;
 // ajoute à une liste déjà enregistrée les caff ajoutés depuis à la liste d'origine
 {const have=parseMapIds(mapText);const add=DEFAULT_MAP.split('\n').filter(l=>!have.has(l.split(';')[0]));if(add.length){mapText=mapText.trimEnd()+'\n'+add.join('\n');store.set('caffMap',mapText)}}
 let collapsed;try{collapsed=new Set(JSON.parse(store.get('collapsed')||'[]'))}catch(e){collapsed=new Set()}
-let HEAD=[],rows=[],current=store.get('jalon')||'01',fileName='',lastBlocks={},lastLab='',Q='';
+let HEAD=[],rows=[],current=store.get('jalon')||'',fileName='',lastBlocks={},lastLab='',Q='';
 
-// Jalon reconnu par son libellé (ex. « 01 - ATT CRVT1 » → CRVT1), le numéro est ignoré
-const JAL_TEXT={CRVT1:'01',APD:'04',CRVTSUIVI:'06',CRVTRI:'08',ENVOITRAVAUX:'10',DOE:'12',TRAITEMENTDOE:'13',DOERAR:'13'};
+// Jalon reconnu par son libellé (ex. « 06 - ATT APD » → APD), le numéro sert seulement à l'ordre des tuiles
 function jalOf(v){
-  const t=String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()
-    .replace(/^\s*\d+\s*[-–:.]?\s*/,'').replace(/^(EN\s+)?ATT(ENTE)?\b\.?\s*(DE\s+|D'\s*)?/,'').replace(/[^A-Z0-9]/g,'');
-  return t?(JAL_TEXT[t]||'?'+t):'';
+  const raw=String(v??'').trim();
+  const num=+(raw.match(/^\s*(\d+)/)||[0,999])[1];
+  const clean=raw.replace(/^\s*\d+\s*[-–:.]?\s*/,'').replace(/^(EN\s+)?ATT(ENTE)?\b\.?\s*(DE\s+|D['’]\s*)?/i,'').trim();
+  let k=clean.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  k=ALIAS[k]||k;
+  if(!k)return {k:'SANS',lab:'Sans jalon',mail:'sans jalon',num:1000};
+  return {k,num,...(KNOWN[k]||{lab:clean.toUpperCase(),mail:clean})};
 }
 function parseMapIds(t){return new Set(t.split(/\r?\n/).map(l=>l.split(/[;\t,]/)[0].replace(/\D/g,'').padStart(4,'0')))}
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
@@ -297,6 +302,7 @@ function load(buf){
   const head=aoa[hi];
   const ci={poi:findCol(head,['poi','dossier']),jal:findCol(head,['jalons','jalon']),caff:findCol(head,['caff']),com:findCol(head,['comcre','coml','commentaire'])};
   if(ci.poi<0||ci.caff<0){$('err').textContent="Colonnes « POI » ou « Caff » introuvables.";return}
+  const info={};
   const rawAoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
   HEAD=head.map(h=>String(h??'').trim());
   // ignore les lignes de pied de tableau (Total, Filtres appliqués) et les lignes sans aucune info de dossier
@@ -304,10 +310,12 @@ function load(buf){
   rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]&&!isFooter(r)).map(([r,raw])=>({
     raw,
     poi:String(r[ci.poi]).trim(),
-    jal:jalOf(r[ci.jal]),
+    jal:(J=>{const o=info[J.k];if(!o||J.num<o.num)info[J.k]=J;return J.k})(jalOf(r[ci.jal])),
     caffRaw:String(r[ci.caff]??'').trim(),
     com:ci.com>=0?String(r[ci.com]??'').trim():''
   }));
+  const order=Object.keys(KNOWN);
+  JALONS=Object.values(info).sort((a,b)=>a.num-b.num||order.indexOf(a.k)-order.indexOf(b.k));
   $('fname').textContent=fileName;
   $('fmeta').textContent=rows.length+' dossiers · chargé à '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   $('filebox').hidden=false;$('empty').hidden=true;$('app').hidden=false;
@@ -332,15 +340,12 @@ function row(r){
 function render(){
   if(!rows.length)return;
   const map=parseMap(mapText);
-  const known=r=>JALONS.some(j=>j.k===r.jal);
   const g={};rows.forEach(r=>{(g[r.jal]??=[]).push(r)});
-  const other=rows.filter(r=>!known(r));
   const tiles=JALONS.map(j=>({k:j.k,lab:j.lab,n:(g[j.k]||[]).length}));
-  if(other.length)tiles.push({k:'autre',lab:'Autres',n:other.length});
-  if(!tiles.some(t=>t.k===current))current='01';
+  if(!tiles.some(t=>t.k===current))current=tiles[0].k;
   const total=rows.length;
   $('tiles').innerHTML=tiles.map(t=>`<button class="tile${t.k===current?' on':''}${t.n?'':' zero'}" data-k="${t.k}" aria-pressed="${t.k===current}"><span class="lab">${esc(t.lab)}</span><span class="n">${t.n}</span><span class="meter"><i style="width:${t.n?Math.max(3,t.n/total*100):0}%"></i></span></button>`).join('');
-  const list=current==='autre'?other:(g[current]||[]);
+  const list=g[current]||[];
   const lab=tiles.find(t=>t.k===current).lab;
   Q=$('q').value.trim().toLowerCase();
   const filt=Q?list.filter(r=>(r.poi+' '+r.com+' '+r.caffRaw).toLowerCase().includes(Q)):list;
@@ -348,7 +353,7 @@ function render(){
   filt.forEach(r=>{
     const id=caffId(r.caffRaw),soc=map[id]||'Non attribué',ck=id||r.caffRaw||'—';
     const S=(socs[soc]??={n:0,caffs:{}});S.n++;
-    (S.caffs[ck]??={id,raw:r.caffRaw,items:[]}).items.push(r);
+    (S.caffs[ck]??={id,raw:r.caffRaw,lab:caffLab(r),items:[]}).items.push(r);
   });
   const names=Object.keys(socs).sort((a,b)=>(a==='Non attribué')-(b==='Non attribué')||a.localeCompare(b,'fr'));
   lastBlocks={};names.forEach(s=>{lastBlocks[s]=Object.values(socs[s].caffs).sort((a,b)=>String(a.id||a.raw).localeCompare(String(b.id||b.raw)))});
@@ -362,7 +367,7 @@ function render(){
     const cs=lastBlocks[s],n=socs[s].n;
     const open=!collapsed.has(s);
     return `<section class="card" id="${sid(s)}"><header class="ch"><h3><button class="tog" aria-expanded="${open}" aria-controls="${sid(s)}-b" data-soc="${esc(s)}"><svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="tn">${esc(s)}</span><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></span></button></h3><div class="acts"><button class="mailb" data-soc="${esc(s)}">${ML}Mail</button><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></div></header><div id="${sid(s)}-b"${open?'':' hidden'}>`+
-      cs.map(b=>`<div class="cg"><div class="cl">${esc(b.id?b.id+' Immo':(b.raw||'Caff vide'))}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</div></section>';
+      cs.map(b=>`<div class="cg"><div class="cl">${esc(b.lab||'Caff vide')}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</div></section>';
   }).join(''):`<div class="empty">${Q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</div>`;
 }
 
@@ -370,7 +375,7 @@ function render(){
 const fixDate=v=>{if(!(v instanceof Date)||isNaN(v))return v;const d=new Date(v.getTime()+432e5);return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
 const safe=s=>String(s).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Feuille';
 const today=()=>new Date().toISOString().slice(0,10);
-const caffLab=r=>{const id=caffId(r.caffRaw);return id?id+' Immo':r.caffRaw};
+const caffLab=r=>{const s=String(r.caffRaw??''),id=caffId(s);if(!id)return s;const m=s.match(/SO-?\s*\d{2,}\s+([A-Za-zÀ-ÿ]+)/i);return id+' '+(m?m[1]:'Immo')};
 function sheetFor(soc){return sheetFromItems(soc,lastBlocks[soc].flatMap(b=>b.items))}
 function sheetFromItems(soc,items){
   const data=[['Société','Caff',...HEAD]];
@@ -381,23 +386,23 @@ function sheetFromItems(soc,items){
   return ws;
 }
 // ---- Mail de relance ----
-const MAILNAME={'01':'CRVT1','04':'APD','06':'CRVT suivi','08':'CRVT RI','10':'envoi travaux','12':'DOE','13':'traitement DOE (RAR)','autre':'autres jalons'};
-const deN=n=>/^[aeiouyh]/i.test(n)?'d’'+n:'de '+n;
-const inJ=(r,k)=>k==='autre'?!JALONS.some(j=>j.k===r.jal):r.jal===k;
+const mailOf=k=>JALONS.find(j=>j.k===k)?.mail||k;
+const deN=n=>/^[aeiouyhéèêëàâîïôûù]/i.test(n)?'d’'+n:'de '+n;
+const inJ=(r,k)=>r.jal===k;
 let contacts;try{contacts=JSON.parse(store.get('contacts')||'{}')}catch(e){contacts={}}
 let mSoc='';
 function socRows(soc){const map=parseMap(mapText);return rows.filter(r=>(map[caffId(r.caffRaw)]||'Non attribué')===soc).sort((a,b)=>caffLab(a).localeCompare(caffLab(b)))}
 const selJ=()=>[...$('mJal').querySelectorAll('input:checked')].map(i=>i.value);
 function openMail(soc){
   mSoc=soc;const rs=socRows(soc);
-  const opts=[...JALONS,{k:'autre',lab:'Autres'}].map(j=>({...j,n:rs.filter(r=>inJ(r,j.k)).length})).filter(j=>j.n);
+  const opts=JALONS.map(j=>({...j,n:rs.filter(r=>inJ(r,j.k)).length})).filter(j=>j.n);
   $('mTitle').textContent='Mail de relance · '+soc;
   $('mJal').innerHTML=opts.map(j=>`<label class="ck"><input type="checkbox" value="${j.k}"${j.k===current?' checked':''}>${esc(j.lab)}<span class="pill">${j.n}</span></label>`).join('');
   $('mTo').value=contacts[soc]||'';$('mMsg').textContent='';
   fillMail();$('mail').showModal();
 }
 function fillMail(){
-  const ks=selJ(),names=ks.map(k=>MAILNAME[k]);
+  const ks=selJ(),names=ks.map(mailOf);
   const phrase=names.length?'en attente '+deN(names[0])+names.slice(1,-1).map(n=>', ceux en attente '+deN(n)).join('')+(names.length>1?' ainsi que ceux en attente '+deN(names.at(-1)):''):'en attente';
   $('mSub').value=`Dossiers en attente${names.length?' '+names.join(' / '):''} – ${mSoc}`;
   $('mBody').value=`Bonjour,\n\nSuite à un export réalisé depuis Power BI Orange, veuillez trouver ci-joint la liste de vos dossiers ${phrase}.\nMerci de procéder aux actions nécessaires afin de réduire ces stocks dans les meilleurs délais.\n\nCordialement,`;
@@ -408,7 +413,7 @@ $('mJal').addEventListener('change',fillMail);
 $('mTo').addEventListener('input',()=>{contacts[mSoc]=$('mTo').value.trim();store.set('contacts',JSON.stringify(contacts))});
 $('mXls').addEventListener('click',()=>{
   const ks=selJ();if(!ks.length)return;const rs=socRows(mSoc),wb=XLSX.utils.book_new();
-  const labOf=k=>k==='autre'?'Autres':JALONS.find(j=>j.k===k).lab;
+  const labOf=k=>JALONS.find(j=>j.k===k)?.lab||k;
   ks.forEach(k=>XLSX.utils.book_append_sheet(wb,sheetFromItems(mSoc,rs.filter(r=>inJ(r,k))),safe(labOf(k))));
   save(wb,`Relance_${slug(mSoc)}_${ks.map(k=>slug(labOf(k))).join('-')}_${today()}.xlsx`);
 });
