@@ -7,97 +7,179 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-/* VOICE: outil de travail, net, lisible d'un coup d'œil
-   IDEA: un tableau de bord de salle de contrôle, une touche par jalon
-   PICTURE: la rangée de touches-compteurs puis les blocs société
-   COLOUR and TYPE: panneau acier, noir, blanc, rouge alarme ; Inter Tight + Inter
-   LAYOUT: bandeau des jalons en haut, blocs empilés dessous */
-:root{color-scheme:light dark;--bg:light-dark(#d5dbe0,#16191c);--panel:light-dark(#fff,#1f2327);--ink:light-dark(#0b0d0f,#eef1f3);--mute:light-dark(#5a636b,#9aa4ad);--line:light-dark(#b9c2c9,#343a40);--red:#e8251a;--soft:light-dark(#eef1f3,#262b30)}
+/* VOICE: outil de bureau sobre, précis, lisible d'un coup d'œil
+   IDEA: un pupitre de suivi : une touche-compteur par jalon, un sommaire des sociétés
+   PICTURE: la rangée de jalons avec jauges, puis les fiches société
+   COLOUR and TYPE: barre noire, fond acier clair, panneaux blancs, rouge pour l'action ; Inter Tight + Inter
+   LAYOUT: barre, jalons, sommaire collant à gauche et fiches à droite ; tout s'empile sur mobile */
+:root{color-scheme:light dark;
+--bg:light-dark(#eef1f4,#0f1215);--panel:light-dark(#fff,#181c20);--ink:light-dark(#0f1419,#e9edf1);
+--mute:light-dark(#5b6670,#8f9aa5);--line:light-dark(#dde3e8,#2a3036);--soft:light-dark(#f5f7f9,#1e2328);
+--chip:light-dark(#eceff2,#262c32);--red:#e8251a}
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0}
-body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
-h1,h2,h3{font-family:"Inter Tight",Inter,sans-serif;margin:0;line-height:1.1}
-.band{padding:clamp(18px,3vw,36px) max(4vw,14px)}
+[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3,h4{font-family:"Inter Tight",Inter,sans-serif;margin:0;line-height:1.1}
 .wrap{max-width:1240px;margin:0 auto}
-header.band{padding-bottom:0}
-.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
-h1{font-size:clamp(26px,4vw,36px)}
-.meta{color:var(--mute);font-size:14px}
-button,.btn{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
-button:focus-visible,input:focus-visible,textarea:focus-visible,.tile:focus-visible{outline:3px solid var(--red);outline-offset:2px}
-#drop{margin-top:16px;border:2px dashed var(--line);border-radius:16px;background:var(--panel);padding:28px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
-#drop.over{border-color:var(--red);background:var(--soft)}
-#drop strong{font-family:"Inter Tight";font-size:20px;display:block}
-#drop.small{padding:12px;text-align:left;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-#drop.small strong{font-size:16px;display:inline}
-.err{color:var(--red);font-weight:600;margin-top:8px}
-.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-top:20px}
-.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:space-between;min-height:118px;color:var(--ink);font:inherit}
-.tile .lab{font:700 15px "Inter Tight",sans-serif;letter-spacing:.01em}
-.tile .n{font:700 clamp(28px,4vw,38px)/1 "Inter Tight",sans-serif;font-variant-numeric:tabular-nums}
-.tile .sub{font-size:13px;color:var(--mute)}
-.tile.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-.tile.on .sub{color:inherit;opacity:.75}
-.tile.on .n{color:var(--red)}
-.tile.zero{opacity:.55}
-.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 4px}
-.tools h2{font-size:24px;flex:1 1 200px}
-input[type=search]{font:16px Inter;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:min(320px,100%)}
-.soc{margin-top:26px}
-.sh{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-bottom:6px;border-bottom:3px solid var(--ink)}
-.sh h2{font-size:22px}
-.sh .xls{margin-left:auto;background:var(--red);color:#fff;border-color:var(--red)}
-.block{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
-.bh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--soft)}
-.bh h3{font-size:18px}
-.bh .caff{font-weight:600;color:var(--mute)}
-.bh .cnt{margin-left:auto;font-size:14px;color:var(--mute)}
+.band{padding:22px max(4vw,14px)}
+.meta{color:var(--mute);font-size:13px}
+button{font:600 14px Inter,sans-serif;min-height:42px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center;transition:border-color .15s,background .15s}
+button:hover{border-color:var(--mute)}
+button:disabled{opacity:.45;cursor:default}
+button:focus-visible,input:focus-visible,textarea:focus-visible,#drop:focus-visible,summary:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.primary{background:var(--red);border-color:var(--red);color:#fff}
+.primary:hover{background:#c91e14;border-color:#c91e14}
+
+/* barre */
+.bar{background:#14181c;color:#fff}
+.barin{max-width:1240px;margin:0 auto;padding:12px max(4vw,14px);display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.brand{display:flex;gap:12px;align-items:center;margin-right:auto}
+.brand b{font:700 17px "Inter Tight",sans-serif;display:block}
+.brand small{font-size:13px;color:#9aa4ad}
+.filebox{display:flex;gap:12px;align-items:center}
+.fi{display:flex;flex-direction:column;text-align:right;font-size:13px;line-height:1.35}
+#fname{font-weight:600;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#fmeta{color:#9aa4ad}
+.ghost{background:transparent;color:#fff;border-color:#3a434b}
+.ghost:hover{border-color:#fff}
+.err{color:var(--red);font-weight:600;padding:10px max(4vw,14px) 0;max-width:1240px;margin:0 auto}
+.err:empty{display:none}
+
+/* accueil */
+#drop{background:var(--panel);border:1.5px dashed var(--line);border-radius:16px;padding:clamp(32px,6vw,60px) 20px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:14px;max-width:760px;margin:clamp(20px,5vh,56px) auto 0;transition:border-color .15s}
+#drop:hover{border-color:var(--mute)}
+#drop h1{font-size:clamp(26px,4vw,34px)}
+#drop p{max-width:46ch;color:var(--mute);margin:0}
+#drop .primary{pointer-events:none}
+#ov{position:fixed;inset:0;z-index:20;background:rgba(15,20,25,.55);display:grid;place-items:center}
+#ov div{background:var(--panel);color:var(--ink);padding:26px 34px;border-radius:14px;border:2px dashed var(--red);font:600 18px Inter,sans-serif}
+
+/* jalons */
+.pipe{display:grid;grid-template-columns:repeat(auto-fit,minmax(122px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:6px;min-height:104px;padding:14px 14px 12px;border-radius:12px;text-align:left}
+.tile .lab{font:600 13px Inter,sans-serif;color:var(--mute)}
+.tile .n{font:700 32px/1 "Inter Tight",sans-serif;font-variant-numeric:tabular-nums}
+.meter{display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden;margin-top:auto}
+.meter i{display:block;height:100%;background:var(--ink);border-radius:2px}
+.tile.zero .n{color:var(--mute)}
+.tile.on{background:var(--ink);border-color:var(--ink)}
+.tile.on .lab{color:var(--panel);opacity:.72}
+.tile.on .n{color:var(--panel)}
+.tile.on .meter{background:color-mix(in srgb,var(--panel) 22%,transparent)}
+.tile.on .meter i{background:var(--red)}
+
+/* zone principale */
+.grid{display:grid;grid-template-columns:240px minmax(0,1fr);gap:24px;align-items:start}
+.aside{position:sticky;top:14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px}
+.aside h4{font:600 13px Inter,sans-serif;color:var(--mute);margin:0 0 6px 8px}
+.slist{display:flex;flex-direction:column;gap:2px;max-height:52vh;overflow-y:auto}
+.si{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:5px 8px;width:100%;min-height:0;padding:8px;border:0;border-radius:8px;background:transparent;text-align:left;font-weight:500}
+.si:hover{background:var(--soft)}
+.sn{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sc{font-variant-numeric:tabular-nums;color:var(--mute)}
+.si .meter{grid-column:1/-1;height:3px;margin:0}
+.full{width:100%;margin-top:12px}
+.aside .meta{margin:8px 2px 0}
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.toolbar h1{font-size:clamp(26px,3.5vw,34px)}
+input[type=search]{font:16px Inter,sans-serif;min-height:42px;padding:0 12px 0 36px;border-radius:9px;border:1px solid var(--line);background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f9aa5' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") 12px 50%/16px no-repeat;color:var(--ink);width:min(320px,100%)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:16px;overflow:hidden;scroll-margin-top:14px}
+.ch{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
+.ch h3{font-size:19px;margin-bottom:2px}
+.cg+.cg{border-top:1px solid var(--line)}
+.cl{display:flex;gap:8px;align-items:center;padding:12px 18px 6px;font-weight:600;font-size:14px}
+.pill{font-size:12.5px;font-weight:600;color:var(--mute);background:var(--chip);border-radius:999px;padding:1px 8px}
 table{width:100%;border-collapse:collapse;font-size:14px}
-th{text-align:left;font-weight:600;color:var(--mute);font-size:13px;padding:8px 16px;border-bottom:1px solid var(--line)}
-td{padding:8px 16px;border-bottom:1px solid var(--soft);vertical-align:top}
-tr:last-child td{border-bottom:0}
-td.d{font-weight:600;white-space:nowrap;width:120px;font-variant-numeric:tabular-nums}
-.none{color:var(--red);font-weight:600}
-.empty{color:var(--mute);padding:30px 0;text-align:center}
-details{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
-summary{cursor:pointer;font-weight:600;min-height:32px}
-textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft);color:var(--ink);margin:10px 0}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+th{text-align:left;font-weight:500;font-size:13px;color:var(--mute);padding:6px 18px;border-bottom:1px solid var(--line)}
+td{padding:9px 18px;border-bottom:1px solid var(--soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--soft)}
+td.d{font-weight:600;white-space:nowrap;width:1%;font-variant-numeric:tabular-nums}
+td.dt{white-space:nowrap;width:1%;font-variant-numeric:tabular-nums}
+.age{display:block;font-size:13px;color:var(--mute)}
+.age.old{color:var(--red);font-weight:600}
+td.st{width:1%}
+.chip{display:inline-block;padding:2px 9px;border-radius:999px;background:var(--chip);font-size:13px;font-weight:600;white-space:nowrap}
+.chip.warn{background:color-mix(in srgb,var(--red) 13%,transparent);color:var(--red)}
+.det{color:var(--ink);overflow-wrap:anywhere}
+.empty{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:16px;padding:36px;text-align:center;color:var(--mute)}
 mark{background:#ffd84d;color:#000;border-radius:2px}
-@media(max-width:600px){td,th{padding:7px 10px}td.d{width:auto}table,thead,tbody,tr,td{display:block}thead{display:none}tr{padding:8px 0;border-bottom:1px solid var(--soft)}td{border:0;padding:2px 12px}}
-@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* correspondances */
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px 18px}
+summary{cursor:pointer;font-weight:600;min-height:30px;display:flex;align-items:center}
+textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--soft);color:var(--ink);margin:10px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+
+@media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.aside{position:static}.slist{flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:4px}.si{width:auto;flex:none;border:1px solid var(--line);grid-template-columns:auto auto}.si .meter{display:none}}
+@media(max-width:600px){.brand small{display:none}.pipe{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tile{min-height:80px;padding:10px}.tile .n{font-size:24px}.tile .lab{font-size:12.5px}.fi{text-align:left}#fname{max-width:170px}.ch,.cl{padding-inline:14px}
+ table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 14px;padding-inline-start:calc(14px + 7em);text-align:start;width:auto}.stack td::before{content:attr(data-l);float:inline-start;width:6.5em;margin-inline-start:-7em;white-space:normal;color:var(--mute);font-weight:500}.stack td:empty{display:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
 </style>
+<script>new MutationObserver(()=>{for(const c of document.querySelectorAll('.stack td:not([data-l])')){let i=0,p=c;while(p=p.previousElementSibling)i+=p.colSpan;c.dataset.l=c.closest('table').rows[0].cells[i]?.textContent||''}}).observe(document,{childList:true,subtree:true})</script>
 </head>
 <body>
-<header class="band"><div class="wrap">
-  <div class="top">
-    <div><h1>Tri des dossiers par jalon</h1><div class="meta" id="meta">Déposez l'export Excel pour commencer</div></div>
+<header class="bar"><div class="barin">
+  <div class="brand">
+    <svg width="34" height="34" viewBox="0 0 34 34" aria-hidden="true"><rect x="3" y="3" width="28" height="28" rx="6" fill="#262c32"/><rect x="8" y="9" width="18" height="3" rx="1" fill="#fff"/><rect x="8" y="15" width="18" height="2" rx="1" fill="#6b7680"/><rect x="8" y="20" width="12" height="2" rx="1" fill="#e8251a"/><rect x="8" y="25" width="18" height="2" rx="1" fill="#6b7680"/></svg>
+    <div><b>Tri des dossiers</b><small>Suivi par jalon, société et caff</small></div>
   </div>
-  <div id="drop" tabindex="0" role="button" aria-label="Déposer un fichier Excel">
-    <strong>Déposez votre fichier Excel ici</strong>
-    <span class="meta">ou touchez pour le choisir (.xlsx, .xls, .csv)</span>
+  <div class="filebox" id="filebox" hidden>
+    <div class="fi"><span id="fname"></span><span id="fmeta"></span></div>
+    <button class="ghost" id="change">Changer de fichier</button>
   </div>
-  <input type="file" id="file" accept=".xlsx,.xls,.xlsm,.csv" hidden>
-  <div class="err" id="err"></div>
-  <div class="tiles" id="tiles"></div>
+  <button class="ghost" id="openMap">Correspondances</button>
 </div></header>
+<div class="err" id="err" role="alert"></div>
+<input type="file" id="file" accept=".xlsx,.xls,.xlsm,.csv" hidden>
 
-<main class="band"><div class="wrap">
-  <div class="tools" id="tools" hidden>
-    <h2 id="title"></h2>
-    <input type="search" id="q" placeholder="Rechercher un dossier, un COML…">
-    <button id="allXls" hidden>Excel toutes sociétés</button>
+<section id="empty" class="band"><div class="wrap">
+  <div id="drop" tabindex="0" role="button" aria-label="Choisir ou déposer un fichier Excel">
+    <svg width="132" height="104" viewBox="0 0 132 104" aria-hidden="true">
+      <ellipse cx="66" cy="98" rx="50" ry="5" fill="currentColor" opacity=".08"/>
+      <path d="M22 8h70l18 18v66a4 4 0 0 1-4 4H22a4 4 0 0 1-4-4V12a4 4 0 0 1 4-4z" fill="var(--panel)" stroke="var(--line)" stroke-width="2"/>
+      <path d="M92 8v14a4 4 0 0 0 4 4h14" fill="var(--soft)" stroke="var(--line)" stroke-width="2"/>
+      <rect x="28" y="32" width="72" height="10" rx="2" fill="var(--ink)"/>
+      <g fill="var(--chip)"><rect x="28" y="47" width="20" height="8" rx="2"/><rect x="52" y="47" width="48" height="8" rx="2"/><rect x="28" y="73" width="20" height="8" rx="2"/><rect x="52" y="73" width="48" height="8" rx="2"/></g>
+      <rect x="28" y="60" width="20" height="8" rx="2" fill="#e8251a"/><rect x="52" y="60" width="48" height="8" rx="2" fill="#e8251a" opacity=".25"/>
+    </svg>
+    <h1>Déposez l'export Excel</h1>
+    <p>Les dossiers sont triés par jalon, puis par société et par caff. Le fichier est lu sur votre appareil, rien n'est envoyé.</p>
+    <span class="primary" style="display:inline-flex;align-items:center;min-height:42px;padding:0 18px;border-radius:9px;font-weight:600">Choisir un fichier</span>
+    <span class="meta">.xlsx, .xls ou .csv</span>
   </div>
-  <p class="meta" style="margin:4px 0 0">« Excel relance » crée un tableau des dossiers de l'entreprise pour la catégorie affichée, prêt à joindre à un mail.</p>
-  <div id="out"></div>
+</div></section>
 
+<main id="app" hidden>
+  <section class="band" style="padding-bottom:6px"><div class="wrap"><div class="pipe" id="tiles"></div></div></section>
+  <section class="band"><div class="wrap grid">
+    <aside class="aside">
+      <h4>Sociétés</h4>
+      <div class="slist" id="slist"></div>
+      <button class="primary full" id="allXls"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Excel toutes sociétés</button>
+      <p class="meta">Un onglet par société, pour le jalon affiché.</p>
+    </aside>
+    <div>
+      <div class="toolbar">
+        <div><h1 id="title"></h1><div class="meta" id="sub"></div></div>
+        <input type="search" id="q" placeholder="Rechercher un dossier, un statut…" aria-label="Rechercher">
+      </div>
+      <div id="out"></div>
+    </div>
+  </div></section>
+</main>
+
+<section class="band" style="padding-top:8px"><div class="wrap">
   <details id="mapbox">
     <summary>Correspondances caff → société</summary>
-    <p class="meta">Une ligne par caff : <b>numéro;Société</b>. Les caff absents de la liste sont regroupés sous « Non attribué ».</p>
+    <p class="meta">Une ligne par caff : <b>numéro;Société</b>. Les caff absents de la liste sont regroupés sous « Non attribué ». La liste est gardée dans ce navigateur.</p>
     <textarea id="map" spellcheck="false"></textarea>
-    <div class="row"><button id="saveMap">Enregistrer</button><button id="resetMap">Revenir à la liste d'origine</button><span class="meta" id="mapMsg"></span></div>
+    <div class="row"><button class="primary" id="saveMap">Enregistrer</button><button id="resetMap">Revenir à la liste d'origine</button><span class="meta" id="mapMsg"></span></div>
   </details>
-</div></main>
+</div></section>
+
+<div id="ov" hidden><div>Déposez le fichier pour le charger</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script>
@@ -132,9 +214,12 @@ const DEFAULT_MAP=`0144;SOGETREL
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_|_$/g,'');
+const sid=s=>'soc-'+slug(s);
+const DL='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mapText=store.get('caffMap')||DEFAULT_MAP;
-let HEAD=[],lastBlocks={},lastLab='';
-let rows=[],current=store.get('jalon')||'01',fileName='';
+let HEAD=[],rows=[],current=store.get('jalon')||'01',fileName='',lastBlocks={},lastLab='',Q='';
 
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
 function caffId(c){const s=String(c??'');const m=s.match(/SO-?\s*(\d{2,})/i)||s.match(/(\d{3,})\s*$/);return m?m[1].padStart(4,'0'):''}
@@ -142,6 +227,7 @@ function findCol(head,names){const h=head.map(x=>String(x??'').trim().toLowerCas
 
 function load(buf){
   $('err').textContent='';
+  if(typeof XLSX==='undefined'){$('err').textContent="La bibliothèque de lecture Excel n'a pas pu se charger.";return}
   let wb;try{wb=XLSX.read(buf,{type:'array',cellDates:true})}catch(e){$('err').textContent="Impossible de lire ce fichier.";return}
   const ws=wb.Sheets[wb.SheetNames[0]];
   const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
@@ -159,84 +245,95 @@ function load(buf){
     caffRaw:String(r[ci.caff]??'').trim(),
     com:ci.com>=0?String(r[ci.com]??'').trim():''
   }));
-  $('drop').classList.add('small');
-  $('drop').innerHTML='<strong>'+esc(fileName)+'</strong><span class="meta">'+rows.length+' dossiers · touchez ou déposez pour changer de fichier</span>';
-  $('meta').textContent='Fichier chargé le '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+  $('fname').textContent=fileName;
+  $('fmeta').textContent=rows.length+' dossiers · chargé à '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  $('filebox').hidden=false;$('empty').hidden=true;$('app').hidden=false;
   render();
 }
 
-function grouped(){
-  const map=parseMap(mapText);
-  const g={};
-  rows.forEach(r=>{(g[r.jal]??=[]).push(r)});
-  return {g,map};
+function parseCom(s){
+  if(!s)return null;
+  const m=s.match(/^\s*\((\d{2})\/(\d{2})\/(\d{4})\)\s*([^$]*?)\s*(?:\$\s*([\s\S]*))?$/);
+  if(!m)return {date:'',age:null,stat:'',det:s};
+  const d=new Date(+m[3],m[2]-1,+m[1]);const t=new Date();t.setHours(0,0,0,0);
+  return {date:`${m[1]}/${m[2]}/${m[3]}`,age:Math.round((t-d)/864e5),stat:m[4].trim(),det:(m[5]||'').replace(/COM:\s*\(\s*\)/i,'').trim()};
+}
+const hl=s=>{const e=esc(s);if(!Q)return e;const k=esc(Q);const i=e.toLowerCase().indexOf(k);return i<0?e:e.slice(0,i)+'<mark>'+e.slice(i,i+k.length)+'</mark>'+e.slice(i+k.length)};
+function row(r){
+  const c=parseCom(r.com);
+  if(!c)return `<tr><td class="d">${hl(r.poi)}</td><td class="dt"></td><td class="st"><span class="chip warn">Pas de COML</span></td><td></td></tr>`;
+  const age=c.age==null?'':`<span class="age${c.age>=30?' old':''}">${c.age<0?'dans '+(-c.age)+' j':c.age===0?"aujourd'hui":'il y a '+c.age+' j'}</span>`;
+  return `<tr><td class="d">${hl(r.poi)}</td><td class="dt">${c.date?esc(c.date)+age:''}</td><td class="st">${c.stat?`<span class="chip">${hl(c.stat)}</span>`:''}</td><td class="det">${hl(c.det)}</td></tr>`;
 }
 
 function render(){
   if(!rows.length)return;
-  const {g,map}=grouped();
-  const other=rows.filter(r=>!JALONS.some(j=>j.k===r.jal)).length;
-  $('tiles').innerHTML=JALONS.map(j=>{
-    const n=(g[j.k]||[]).length;
-    return `<button class="tile${j.k===current?' on':''}${n?'':' zero'}" data-k="${j.k}"><span class="lab">${j.lab}</span><span class="n">${n}</span><span class="sub">dossiers</span></button>`
-  }).join('')+(other?`<button class="tile${current==='autre'?' on':''}" data-k="autre"><span class="lab">AUTRES</span><span class="n">${other}</span><span class="sub">sans jalon connu</span></button>`:'');
-  const list=current==='autre'?rows.filter(r=>!JALONS.some(j=>j.k===r.jal)):(g[current]||[]);
-  const lab=current==='autre'?'Autres jalons':JALONS.find(j=>j.k===current)?.lab;
-  $('tools').hidden=false;
-  const q=$('q').value.trim().toLowerCase();
-  const filt=q?list.filter(r=>(r.poi+' '+r.com+' '+r.caffRaw).toLowerCase().includes(q)):list;
-  $('title').textContent=lab+' · '+filt.length+' dossier'+(filt.length>1?'s':'');
-  // regroupement société → caff
-  const blocks={};
-  filt.forEach(r=>{
-    const id=caffId(r.caffRaw);
-    const soc=map[id]||'Non attribué';
-    const key=soc+'|'+(id||r.caffRaw||'—');
-    (blocks[key]??={soc,id,raw:r.caffRaw,items:[]}).items.push(r);
-  });
-  const keys=Object.keys(blocks).sort((a,b)=>{
-    const A=blocks[a],B=blocks[b];
-    if((A.soc==='Non attribué')!==(B.soc==='Non attribué'))return A.soc==='Non attribué'?1:-1;
-    return A.soc.localeCompare(B.soc,'fr')||String(A.id).localeCompare(String(B.id));
-  });
-  const hl=s=>{const e=esc(s);if(!q)return e;const i=e.toLowerCase().indexOf(esc(q));return i<0?e:e.slice(0,i)+'<mark>'+e.slice(i,i+esc(q).length)+'</mark>'+e.slice(i+esc(q).length)};
-  // regroupe les blocs caff par société
+  const map=parseMap(mapText);
+  const known=r=>JALONS.some(j=>j.k===r.jal);
+  const g={};rows.forEach(r=>{(g[r.jal]??=[]).push(r)});
+  const other=rows.filter(r=>!known(r));
+  const tiles=JALONS.map(j=>({k:j.k,lab:j.lab,n:(g[j.k]||[]).length}));
+  if(other.length)tiles.push({k:'autre',lab:'Autres',n:other.length});
+  if(!tiles.some(t=>t.k===current))current='01';
+  const total=rows.length;
+  $('tiles').innerHTML=tiles.map(t=>`<button class="tile${t.k===current?' on':''}${t.n?'':' zero'}" data-k="${t.k}" aria-pressed="${t.k===current}"><span class="lab">${esc(t.lab)}</span><span class="n">${t.n}</span><span class="meter"><i style="width:${t.n?Math.max(3,t.n/total*100):0}%"></i></span></button>`).join('');
+  const list=current==='autre'?other:(g[current]||[]);
+  const lab=tiles.find(t=>t.k===current).lab;
+  Q=$('q').value.trim().toLowerCase();
+  const filt=Q?list.filter(r=>(r.poi+' '+r.com+' '+r.caffRaw).toLowerCase().includes(Q)):list;
   const socs={};
-  keys.forEach(k=>{const b=blocks[k];(socs[b.soc]??=[]).push(b)});
-  lastBlocks=socs;lastLab=lab;
-  $('allXls').hidden=!keys.length;
-  $('out').innerHTML=keys.length?Object.keys(socs).map(s=>{
-    const n=socs[s].reduce((a,b)=>a+b.items.length,0);
-    return `<div class="soc"><div class="sh"><h2>${esc(s)}</h2><span class="meta">${n} dossier${n>1?'s':''}</span><button class="xls" data-soc="${esc(s)}">Excel relance</button></div>`+
-    socs[s].map(b=>{
-    const caffLab=b.id?b.id+' Immo':(b.raw||'Caff vide');
-    return `<section class="block"><div class="bh"><h3>${esc(b.soc)}</h3><span class="caff">${esc(caffLab)}</span><span class="cnt">${b.items.length} dossier${b.items.length>1?'s':''}</span></div>
-    <table><thead><tr><th>Dossier</th><th>COML</th></tr></thead><tbody>${b.items.map(r=>`<tr><td class="d">${hl(r.poi)}</td><td>${r.com?hl(r.com):'<span class="none">PAS DE COML</span>'}</td></tr>`).join('')}</tbody></table></section>`
-  }).join('')+'</div>'}).join(''):`<p class="empty">${q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</p>`;
+  filt.forEach(r=>{
+    const id=caffId(r.caffRaw),soc=map[id]||'Non attribué',ck=id||r.caffRaw||'—';
+    const S=(socs[soc]??={n:0,caffs:{}});S.n++;
+    (S.caffs[ck]??={id,raw:r.caffRaw,items:[]}).items.push(r);
+  });
+  const names=Object.keys(socs).sort((a,b)=>(a==='Non attribué')-(b==='Non attribué')||a.localeCompare(b,'fr'));
+  lastBlocks={};names.forEach(s=>{lastBlocks[s]=Object.values(socs[s].caffs).sort((a,b)=>String(a.id||a.raw).localeCompare(String(b.id||b.raw)))});
+  lastLab=lab;
+  $('title').textContent=lab;
+  $('sub').textContent=`${filt.length} dossier${filt.length>1?'s':''} · ${names.length} société${names.length>1?'s':''}${Q?' · filtrés':''}`;
+  $('allXls').disabled=!names.length;
+  const max=Math.max(1,...names.map(s=>socs[s].n));
+  $('slist').innerHTML=names.length?names.map(s=>`<button class="si" data-go="${sid(s)}"><span class="sn">${esc(s)}</span><span class="sc">${socs[s].n}</span><span class="meter"><i style="width:${socs[s].n/max*100}%"></i></span></button>`).join(''):'<p class="meta">Aucune société</p>';
+  $('out').innerHTML=names.length?names.map(s=>{
+    const cs=lastBlocks[s],n=socs[s].n;
+    return `<section class="card" id="${sid(s)}"><header class="ch"><div><h3>${esc(s)}</h3><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></div><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></header>`+
+      cs.map(b=>`<div class="cg"><div class="cl">${esc(b.id?b.id+' Immo':(b.raw||'Caff vide'))}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</section>';
+  }).join(''):`<div class="empty">${Q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</div>`;
 }
 
 // ---- Export Excel de relance ----
 const fixDate=v=>{if(!(v instanceof Date)||isNaN(v))return v;const d=new Date(v.getTime()+432e5);return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
 const safe=s=>String(s).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Feuille';
-const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_|_$/g,'');
+const today=()=>new Date().toISOString().slice(0,10);
 function sheetFor(soc){
   const data=[['Société','Caff',...HEAD]];
-  lastBlocks[soc].forEach(b=>b.items.forEach(r=>{
-    const vals=HEAD.map((_,i)=>fixDate(r.raw[i]??null));
-    data.push([soc,b.id?b.id+' Immo':b.raw,...vals]);
-  }));
+  lastBlocks[soc].forEach(b=>b.items.forEach(r=>data.push([soc,b.id?b.id+' Immo':b.raw,...HEAD.map((_,i)=>fixDate(r.raw[i]??null))])));
   const ws=XLSX.utils.aoa_to_sheet(data,{cellDates:true,dateNF:'dd/mm/yyyy'});
   ws['!cols']=data[0].map((h,i)=>({wch:Math.min(60,Math.max(10,...data.map(r=>r[i] instanceof Date?10:String(r[i]??'').length))+2)}));
   ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:data.length-1,c:data[0].length-1}})};
   return ws;
 }
-function save(wb,name){
-  try{XLSX.writeFile(wb,name,{cellDates:true})}catch(e){$('err').textContent="Le téléchargement a été bloqué par le navigateur."}
-}
-const today=()=>new Date().toISOString().slice(0,10);
+function save(wb,name){try{XLSX.writeFile(wb,name,{cellDates:true})}catch(e){$('err').textContent="Le téléchargement a été bloqué par le navigateur."}}
+
+// ---- Événements ----
+function pick(f){if(!f)return;fileName=f.name;const rd=new FileReader();rd.onload=e=>load(new Uint8Array(e.target.result));rd.readAsArrayBuffer(f)}
+const openFile=()=>$('file').click();
+$('drop').addEventListener('click',openFile);
+$('drop').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();openFile()}});
+$('change').addEventListener('click',openFile);
+$('file').addEventListener('change',e=>{pick(e.target.files[0]);e.target.value=''});
+let dragN=0;
+document.addEventListener('dragenter',e=>{if(![...(e.dataTransfer?.types||[])].includes('Files'))return;e.preventDefault();dragN++;$('ov').hidden=false});
+document.addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN)$('ov').hidden=true});
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();dragN=0;$('ov').hidden=true;pick(e.dataTransfer?.files[0])});
+$('tiles').addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;current=t.dataset.k;store.set('jalon',current);render()});
+$('slist').addEventListener('click',e=>{const b=e.target.closest('.si');if(b)$(b.dataset.go)?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})});
+$('q').addEventListener('input',render);
 $('out').addEventListener('click',e=>{
   const b=e.target.closest('.xls');if(!b)return;
-  const soc=b.dataset.soc;const wb=XLSX.utils.book_new();
+  const soc=b.dataset.soc,wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,sheetFor(soc),safe(soc));
   save(wb,`Relance_${slug(soc)}_${slug(lastLab)}_${today()}.xlsx`);
 });
@@ -245,23 +342,10 @@ $('allXls').addEventListener('click',()=>{
   Object.keys(lastBlocks).forEach(s=>XLSX.utils.book_append_sheet(wb,sheetFor(s),safe(s)));
   save(wb,`Relances_${slug(lastLab)}_${today()}.xlsx`);
 });
-
-function pick(f){if(!f)return;fileName=f.name;const rd=new FileReader();rd.onload=e=>load(new Uint8Array(e.target.result));rd.readAsArrayBuffer(f)}
-const drop=$('drop');
-drop.addEventListener('click',()=>$('file').click());
-drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click()}});
-$('file').addEventListener('change',e=>{pick(e.target.files[0]);e.target.value=''});
-['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
-['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
-drop.addEventListener('drop',e=>pick(e.dataTransfer.files[0]));
-document.addEventListener('dragover',e=>e.preventDefault());
-document.addEventListener('drop',e=>{e.preventDefault();if(e.target!==drop&&!drop.contains(e.target))pick(e.dataTransfer.files[0])});
-$('tiles').addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;current=t.dataset.k;store.set('jalon',current);render();$('tools').scrollIntoView({behavior:'smooth',block:'start'})});
-$('q').addEventListener('input',render);
+$('openMap').addEventListener('click',()=>{$('mapbox').open=true;$('mapbox').scrollIntoView({behavior:reduce?'auto':'smooth'})});
 $('map').value=mapText;
 $('saveMap').addEventListener('click',()=>{mapText=$('map').value;store.set('caffMap',mapText);$('mapMsg').textContent='Enregistré';render();setTimeout(()=>$('mapMsg').textContent='',2000)});
 $('resetMap').addEventListener('click',()=>{mapText=DEFAULT_MAP;$('map').value=mapText;store.set('caffMap',mapText);$('mapMsg').textContent='Liste d’origine rétablie';render()});
-if(typeof XLSX==='undefined')$('err').textContent="La bibliothèque de lecture Excel n'a pas pu se charger.";
 }
 </script>
 </body>
