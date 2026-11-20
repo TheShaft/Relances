@@ -274,6 +274,13 @@ let mapText=store.get('caffMap')||DEFAULT_MAP;
 let collapsed;try{collapsed=new Set(JSON.parse(store.get('collapsed')||'[]'))}catch(e){collapsed=new Set()}
 let HEAD=[],rows=[],current=store.get('jalon')||'01',fileName='',lastBlocks={},lastLab='',Q='';
 
+// Jalon reconnu par son libellé (ex. « 01 - ATT CRVT1 » → CRVT1), le numéro est ignoré
+const JAL_TEXT={CRVT1:'01',APD:'04',CRVTSUIVI:'06',CRVTRI:'08',ENVOITRAVAUX:'10',DOE:'12',TRAITEMENTDOE:'13',DOERAR:'13'};
+function jalOf(v){
+  const t=String(v??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase()
+    .replace(/^\s*\d+\s*[-–:.]?\s*/,'').replace(/^(EN\s+)?ATT(ENTE)?\b\.?\s*(DE\s+|D'\s*)?/,'').replace(/[^A-Z0-9]/g,'');
+  return t?(JAL_TEXT[t]||'?'+t):'';
+}
 function parseMapIds(t){return new Set(t.split(/\r?\n/).map(l=>l.split(/[;\t,]/)[0].replace(/\D/g,'').padStart(4,'0')))}
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
 function caffId(c){const s=String(c??'');const m=s.match(/SO-?\s*(\d{2,})/i)||s.match(/(\d{3,})\s*$/);return m?m[1].padStart(4,'0'):''}
@@ -297,7 +304,7 @@ function load(buf){
   rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]&&!isFooter(r)).map(([r,raw])=>({
     raw,
     poi:String(r[ci.poi]).trim(),
-    jal:(String(r[ci.jal]??'').match(/^\s*(\d{1,2})/)||[])[1]?.padStart(2,'0')||'',
+    jal:jalOf(r[ci.jal]),
     caffRaw:String(r[ci.caff]??'').trim(),
     com:ci.com>=0?String(r[ci.com]??'').trim():''
   }));
