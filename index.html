@@ -43,6 +43,10 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,.tile:focus-visi
 .tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 4px}
 .tools h2{font-size:24px;flex:1 1 200px}
 input[type=search]{font:16px Inter;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:min(320px,100%)}
+.soc{margin-top:26px}
+.sh{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;padding-bottom:6px;border-bottom:3px solid var(--ink)}
+.sh h2{font-size:22px}
+.sh .xls{margin-left:auto;background:var(--red);color:#fff;border-color:var(--red)}
 .block{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
 .bh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--soft)}
 .bh h3{font-size:18px}
@@ -82,7 +86,9 @@ mark{background:#ffd84d;color:#000;border-radius:2px}
   <div class="tools" id="tools" hidden>
     <h2 id="title"></h2>
     <input type="search" id="q" placeholder="Rechercher un dossier, un COML…">
+    <button id="allXls" hidden>Excel toutes sociétés</button>
   </div>
+  <p class="meta" style="margin:4px 0 0">« Excel relance » crée un tableau des dossiers de l'entreprise pour la catégorie affichée, prêt à joindre à un mail.</p>
   <div id="out"></div>
 
   <details id="mapbox">
@@ -127,6 +133,7 @@ const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let mapText=store.get('caffMap')||DEFAULT_MAP;
+let HEAD=[],lastBlocks={},lastLab='';
 let rows=[],current=store.get('jalon')||'01',fileName='';
 
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
@@ -143,7 +150,10 @@ function load(buf){
   const head=aoa[hi];
   const ci={poi:findCol(head,['poi','dossier']),jal:findCol(head,['jalons','jalon']),caff:findCol(head,['caff']),com:findCol(head,['comcre','coml','commentaire'])};
   if(ci.poi<0||ci.caff<0){$('err').textContent="Colonnes « POI » ou « Caff » introuvables.";return}
-  rows=aoa.slice(hi+1).filter(r=>r[ci.poi]).map(r=>({
+  const rawAoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
+  HEAD=head.map(h=>String(h??'').trim());
+  rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]).map(([r,raw])=>({
+    raw,
     poi:String(r[ci.poi]).trim(),
     jal:(String(r[ci.jal]??'').match(/^\s*(\d{1,2})/)||[])[1]?.padStart(2,'0')||'',
     caffRaw:String(r[ci.caff]??'').trim(),
@@ -190,13 +200,51 @@ function render(){
     return A.soc.localeCompare(B.soc,'fr')||String(A.id).localeCompare(String(B.id));
   });
   const hl=s=>{const e=esc(s);if(!q)return e;const i=e.toLowerCase().indexOf(esc(q));return i<0?e:e.slice(0,i)+'<mark>'+e.slice(i,i+esc(q).length)+'</mark>'+e.slice(i+esc(q).length)};
-  $('out').innerHTML=keys.length?keys.map(k=>{
-    const b=blocks[k];
+  // regroupe les blocs caff par société
+  const socs={};
+  keys.forEach(k=>{const b=blocks[k];(socs[b.soc]??=[]).push(b)});
+  lastBlocks=socs;lastLab=lab;
+  $('allXls').hidden=!keys.length;
+  $('out').innerHTML=keys.length?Object.keys(socs).map(s=>{
+    const n=socs[s].reduce((a,b)=>a+b.items.length,0);
+    return `<div class="soc"><div class="sh"><h2>${esc(s)}</h2><span class="meta">${n} dossier${n>1?'s':''}</span><button class="xls" data-soc="${esc(s)}">Excel relance</button></div>`+
+    socs[s].map(b=>{
     const caffLab=b.id?b.id+' Immo':(b.raw||'Caff vide');
     return `<section class="block"><div class="bh"><h3>${esc(b.soc)}</h3><span class="caff">${esc(caffLab)}</span><span class="cnt">${b.items.length} dossier${b.items.length>1?'s':''}</span></div>
     <table><thead><tr><th>Dossier</th><th>COML</th></tr></thead><tbody>${b.items.map(r=>`<tr><td class="d">${hl(r.poi)}</td><td>${r.com?hl(r.com):'<span class="none">PAS DE COML</span>'}</td></tr>`).join('')}</tbody></table></section>`
-  }).join(''):`<p class="empty">${q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</p>`;
+  }).join('')+'</div>'}).join(''):`<p class="empty">${q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</p>`;
 }
+
+// ---- Export Excel de relance ----
+const fixDate=v=>{if(!(v instanceof Date)||isNaN(v))return v;const d=new Date(v.getTime()+432e5);return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
+const safe=s=>String(s).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Feuille';
+const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_|_$/g,'');
+function sheetFor(soc){
+  const data=[['Société','Caff',...HEAD]];
+  lastBlocks[soc].forEach(b=>b.items.forEach(r=>{
+    const vals=HEAD.map((_,i)=>fixDate(r.raw[i]??null));
+    data.push([soc,b.id?b.id+' Immo':b.raw,...vals]);
+  }));
+  const ws=XLSX.utils.aoa_to_sheet(data,{cellDates:true,dateNF:'dd/mm/yyyy'});
+  ws['!cols']=data[0].map((h,i)=>({wch:Math.min(60,Math.max(10,...data.map(r=>r[i] instanceof Date?10:String(r[i]??'').length))+2)}));
+  ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:data.length-1,c:data[0].length-1}})};
+  return ws;
+}
+function save(wb,name){
+  try{XLSX.writeFile(wb,name,{cellDates:true})}catch(e){$('err').textContent="Le téléchargement a été bloqué par le navigateur."}
+}
+const today=()=>new Date().toISOString().slice(0,10);
+$('out').addEventListener('click',e=>{
+  const b=e.target.closest('.xls');if(!b)return;
+  const soc=b.dataset.soc;const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,sheetFor(soc),safe(soc));
+  save(wb,`Relance_${slug(soc)}_${slug(lastLab)}_${today()}.xlsx`);
+});
+$('allXls').addEventListener('click',()=>{
+  const wb=XLSX.utils.book_new();
+  Object.keys(lastBlocks).forEach(s=>XLSX.utils.book_append_sheet(wb,sheetFor(s),safe(s)));
+  save(wb,`Relances_${slug(lastLab)}_${today()}.xlsx`);
+});
 
 function pick(f){if(!f)return;fileName=f.name;const rd=new FileReader();rd.onload=e=>load(new Uint8Array(e.target.result));rd.readAsArrayBuffer(f)}
 const drop=$('drop');
