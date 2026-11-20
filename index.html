@@ -242,6 +242,7 @@ const DEFAULT_MAP=`0144;SOGETREL
 0233;AIR
 0234;AIR
 0307;AIR
+0394;AIR
 0240;AR TECHNOLOGIE
 0241;AR TECHNOLOGIE
 0242;AR TECHNOLOGIE
@@ -257,6 +258,7 @@ const DEFAULT_MAP=`0144;SOGETREL
 0073;SOGETREL
 0074;SOGETREL
 0075;SOGETREL
+0076;SOGETREL
 0077;SOGETREL`;
 const $=id=>document.getElementById(id);
 const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
@@ -267,9 +269,12 @@ const DL='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><pa
 const ML='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m3 6 7 5 7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mapText=store.get('caffMap')||DEFAULT_MAP;
+// ajoute à une liste déjà enregistrée les caff ajoutés depuis à la liste d'origine
+{const have=parseMapIds(mapText);const add=DEFAULT_MAP.split('\n').filter(l=>!have.has(l.split(';')[0]));if(add.length){mapText=mapText.trimEnd()+'\n'+add.join('\n');store.set('caffMap',mapText)}}
 let collapsed;try{collapsed=new Set(JSON.parse(store.get('collapsed')||'[]'))}catch(e){collapsed=new Set()}
 let HEAD=[],rows=[],current=store.get('jalon')||'01',fileName='',lastBlocks={},lastLab='',Q='';
 
+function parseMapIds(t){return new Set(t.split(/\r?\n/).map(l=>l.split(/[;\t,]/)[0].replace(/\D/g,'').padStart(4,'0')))}
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
 function caffId(c){const s=String(c??'');const m=s.match(/SO-?\s*(\d{2,})/i)||s.match(/(\d{3,})\s*$/);return m?m[1].padStart(4,'0'):''}
 function findCol(head,names){const h=head.map(x=>String(x??'').trim().toLowerCase());for(const n of names){const i=h.indexOf(n);if(i>=0)return i}return -1}
