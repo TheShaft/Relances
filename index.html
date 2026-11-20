@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Tri des dossiers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* VOICE: outil de travail, net, lisible d'un coup d'œil
+   IDEA: un tableau de bord de salle de contrôle, une touche par jalon
+   PICTURE: la rangée de touches-compteurs puis les blocs société
+   COLOUR and TYPE: panneau acier, noir, blanc, rouge alarme ; Inter Tight + Inter
+   LAYOUT: bandeau des jalons en haut, blocs empilés dessous */
+:root{color-scheme:light dark;--bg:light-dark(#d5dbe0,#16191c);--panel:light-dark(#fff,#1f2327);--ink:light-dark(#0b0d0f,#eef1f3);--mute:light-dark(#5a636b,#9aa4ad);--line:light-dark(#b9c2c9,#343a40);--red:#e8251a;--soft:light-dark(#eef1f3,#262b30)}
+:root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 Inter,system-ui,sans-serif;overflow-x:clip}
+h1,h2,h3{font-family:"Inter Tight",Inter,sans-serif;margin:0;line-height:1.1}
+.band{padding:clamp(18px,3vw,36px) max(4vw,14px)}
+.wrap{max-width:1240px;margin:0 auto}
+header.band{padding-bottom:0}
+.top{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+h1{font-size:clamp(26px,4vw,36px)}
+.meta{color:var(--mute);font-size:14px}
+button,.btn{font:600 15px Inter,sans-serif;min-height:44px;padding:0 16px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer}
+button:focus-visible,input:focus-visible,textarea:focus-visible,.tile:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+#drop{margin-top:16px;border:2px dashed var(--line);border-radius:16px;background:var(--panel);padding:28px 18px;text-align:center;cursor:pointer;transition:border-color .15s,background .15s}
+#drop.over{border-color:var(--red);background:var(--soft)}
+#drop strong{font-family:"Inter Tight";font-size:20px;display:block}
+#drop.small{padding:12px;text-align:left;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+#drop.small strong{font-size:16px;display:inline}
+.err{color:var(--red);font-weight:600;margin-top:8px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-top:20px}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 12px;cursor:pointer;text-align:center;display:flex;flex-direction:column;gap:8px;align-items:center;justify-content:space-between;min-height:118px;color:var(--ink);font:inherit}
+.tile .lab{font:700 15px "Inter Tight",sans-serif;letter-spacing:.01em}
+.tile .n{font:700 clamp(28px,4vw,38px)/1 "Inter Tight",sans-serif;font-variant-numeric:tabular-nums}
+.tile .sub{font-size:13px;color:var(--mute)}
+.tile.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.tile.on .sub{color:inherit;opacity:.75}
+.tile.on .n{color:var(--red)}
+.tile.zero{opacity:.55}
+.tools{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:22px 0 4px}
+.tools h2{font-size:24px;flex:1 1 200px}
+input[type=search]{font:16px Inter;min-height:44px;padding:0 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);color:var(--ink);width:min(320px,100%)}
+.block{background:var(--panel);border:1px solid var(--line);border-radius:14px;margin-top:14px;overflow:hidden}
+.bh{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--soft)}
+.bh h3{font-size:18px}
+.bh .caff{font-weight:600;color:var(--mute)}
+.bh .cnt{margin-left:auto;font-size:14px;color:var(--mute)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th{text-align:left;font-weight:600;color:var(--mute);font-size:13px;padding:8px 16px;border-bottom:1px solid var(--line)}
+td{padding:8px 16px;border-bottom:1px solid var(--soft);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.d{font-weight:600;white-space:nowrap;width:120px;font-variant-numeric:tabular-nums}
+.none{color:var(--red);font-weight:600}
+.empty{color:var(--mute);padding:30px 0;text-align:center}
+details{margin-top:28px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px 16px}
+summary{cursor:pointer;font-weight:600;min-height:32px}
+textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:10px;padding:10px;background:var(--soft);color:var(--ink);margin:10px 0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+mark{background:#ffd84d;color:#000;border-radius:2px}
+@media(max-width:600px){td,th{padding:7px 10px}td.d{width:auto}table,thead,tbody,tr,td{display:block}thead{display:none}tr{padding:8px 0;border-bottom:1px solid var(--soft)}td{border:0;padding:2px 12px}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="band"><div class="wrap">
+  <div class="top">
+    <div><h1>Tri des dossiers par jalon</h1><div class="meta" id="meta">Déposez l'export Excel pour commencer</div></div>
+  </div>
+  <div id="drop" tabindex="0" role="button" aria-label="Déposer un fichier Excel">
+    <strong>Déposez votre fichier Excel ici</strong>
+    <span class="meta">ou touchez pour le choisir (.xlsx, .xls, .csv)</span>
+  </div>
+  <input type="file" id="file" accept=".xlsx,.xls,.xlsm,.csv" hidden>
+  <div class="err" id="err"></div>
+  <div class="tiles" id="tiles"></div>
+</div></header>
+
+<main class="band"><div class="wrap">
+  <div class="tools" id="tools" hidden>
+    <h2 id="title"></h2>
+    <input type="search" id="q" placeholder="Rechercher un dossier, un COML…">
+  </div>
+  <div id="out"></div>
+
+  <details id="mapbox">
+    <summary>Correspondances caff → société</summary>
+    <p class="meta">Une ligne par caff : <b>numéro;Société</b>. Les caff absents de la liste sont regroupés sous « Non attribué ».</p>
+    <textarea id="map" spellcheck="false"></textarea>
+    <div class="row"><button id="saveMap">Enregistrer</button><button id="resetMap">Revenir à la liste d'origine</button><span class="meta" id="mapMsg"></span></div>
+  </details>
+</div></main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+{
+const JALONS=[
+  {k:'01',lab:'CRVT 1'},{k:'04',lab:'APD'},{k:'06',lab:'CRVT SUIVI'},{k:'08',lab:'CRVT RI'},
+  {k:'10',lab:'ENVOI TRAVAUX'},{k:'12',lab:'DOE'},{k:'13',lab:'DOE RAR'}
+];
+const DEFAULT_MAP=`0144;SOGETREL
+0230;AIR
+0231;AIR
+0232;AIR
+0233;AIR
+0234;AIR
+0307;AIR
+0240;AR TECHNOLOGIE
+0241;AR TECHNOLOGIE
+0242;AR TECHNOLOGIE
+0227;LDXI
+0274;LDXI
+0228;MS ESTUAIRE
+0244;ROUNDB France
+0245;ROUNDB France
+0246;ROUNDB France
+0235;SAREA
+0236;SAREA
+0340;SAREA
+0073;SOGETREL
+0074;SOGETREL
+0075;SOGETREL
+0077;SOGETREL`;
+const $=id=>document.getElementById(id);
+const store={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let mapText=store.get('caffMap')||DEFAULT_MAP;
+let rows=[],current=store.get('jalon')||'01',fileName='';
+
+function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
+function caffId(c){const s=String(c??'');const m=s.match(/SO-?\s*(\d{2,})/i)||s.match(/(\d{3,})\s*$/);return m?m[1].padStart(4,'0'):''}
+function findCol(head,names){const h=head.map(x=>String(x??'').trim().toLowerCase());for(const n of names){const i=h.indexOf(n);if(i>=0)return i}return -1}
+
+function load(buf){
+  $('err').textContent='';
+  let wb;try{wb=XLSX.read(buf,{type:'array',cellDates:true})}catch(e){$('err').textContent="Impossible de lire ce fichier.";return}
+  const ws=wb.Sheets[wb.SheetNames[0]];
+  const aoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:false});
+  const hi=aoa.findIndex(r=>r.some(c=>/^jalons?$/i.test(String(c??'').trim())));
+  if(hi<0){$('err').textContent="Colonne « Jalons » introuvable dans la première feuille.";return}
+  const head=aoa[hi];
+  const ci={poi:findCol(head,['poi','dossier']),jal:findCol(head,['jalons','jalon']),caff:findCol(head,['caff']),com:findCol(head,['comcre','coml','commentaire'])};
+  if(ci.poi<0||ci.caff<0){$('err').textContent="Colonnes « POI » ou « Caff » introuvables.";return}
+  rows=aoa.slice(hi+1).filter(r=>r[ci.poi]).map(r=>({
+    poi:String(r[ci.poi]).trim(),
+    jal:(String(r[ci.jal]??'').match(/^\s*(\d{1,2})/)||[])[1]?.padStart(2,'0')||'',
+    caffRaw:String(r[ci.caff]??'').trim(),
+    com:ci.com>=0?String(r[ci.com]??'').trim():''
+  }));
+  $('drop').classList.add('small');
+  $('drop').innerHTML='<strong>'+esc(fileName)+'</strong><span class="meta">'+rows.length+' dossiers · touchez ou déposez pour changer de fichier</span>';
+  $('meta').textContent='Fichier chargé le '+new Date().toLocaleString('fr-FR',{dateStyle:'short',timeStyle:'short'});
+  render();
+}
+
+function grouped(){
+  const map=parseMap(mapText);
+  const g={};
+  rows.forEach(r=>{(g[r.jal]??=[]).push(r)});
+  return {g,map};
+}
+
+function render(){
+  if(!rows.length)return;
+  const {g,map}=grouped();
+  const other=rows.filter(r=>!JALONS.some(j=>j.k===r.jal)).length;
+  $('tiles').innerHTML=JALONS.map(j=>{
+    const n=(g[j.k]||[]).length;
+    return `<button class="tile${j.k===current?' on':''}${n?'':' zero'}" data-k="${j.k}"><span class="lab">${j.lab}</span><span class="n">${n}</span><span class="sub">dossiers</span></button>`
+  }).join('')+(other?`<button class="tile${current==='autre'?' on':''}" data-k="autre"><span class="lab">AUTRES</span><span class="n">${other}</span><span class="sub">sans jalon connu</span></button>`:'');
+  const list=current==='autre'?rows.filter(r=>!JALONS.some(j=>j.k===r.jal)):(g[current]||[]);
+  const lab=current==='autre'?'Autres jalons':JALONS.find(j=>j.k===current)?.lab;
+  $('tools').hidden=false;
+  const q=$('q').value.trim().toLowerCase();
+  const filt=q?list.filter(r=>(r.poi+' '+r.com+' '+r.caffRaw).toLowerCase().includes(q)):list;
+  $('title').textContent=lab+' · '+filt.length+' dossier'+(filt.length>1?'s':'');
+  // regroupement société → caff
+  const blocks={};
+  filt.forEach(r=>{
+    const id=caffId(r.caffRaw);
+    const soc=map[id]||'Non attribué';
+    const key=soc+'|'+(id||r.caffRaw||'—');
+    (blocks[key]??={soc,id,raw:r.caffRaw,items:[]}).items.push(r);
+  });
+  const keys=Object.keys(blocks).sort((a,b)=>{
+    const A=blocks[a],B=blocks[b];
+    if((A.soc==='Non attribué')!==(B.soc==='Non attribué'))return A.soc==='Non attribué'?1:-1;
+    return A.soc.localeCompare(B.soc,'fr')||String(A.id).localeCompare(String(B.id));
+  });
+  const hl=s=>{const e=esc(s);if(!q)return e;const i=e.toLowerCase().indexOf(esc(q));return i<0?e:e.slice(0,i)+'<mark>'+e.slice(i,i+esc(q).length)+'</mark>'+e.slice(i+esc(q).length)};
+  $('out').innerHTML=keys.length?keys.map(k=>{
+    const b=blocks[k];
+    const caffLab=b.id?b.id+' Immo':(b.raw||'Caff vide');
+    return `<section class="block"><div class="bh"><h3>${esc(b.soc)}</h3><span class="caff">${esc(caffLab)}</span><span class="cnt">${b.items.length} dossier${b.items.length>1?'s':''}</span></div>
+    <table><thead><tr><th>Dossier</th><th>COML</th></tr></thead><tbody>${b.items.map(r=>`<tr><td class="d">${hl(r.poi)}</td><td>${r.com?hl(r.com):'<span class="none">PAS DE COML</span>'}</td></tr>`).join('')}</tbody></table></section>`
+  }).join(''):`<p class="empty">${q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</p>`;
+}
+
+function pick(f){if(!f)return;fileName=f.name;const rd=new FileReader();rd.onload=e=>load(new Uint8Array(e.target.result));rd.readAsArrayBuffer(f)}
+const drop=$('drop');
+drop.addEventListener('click',()=>$('file').click());
+drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('file').click()}});
+$('file').addEventListener('change',e=>{pick(e.target.files[0]);e.target.value=''});
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,e=>{e.preventDefault();drop.classList.remove('over')}));
+drop.addEventListener('drop',e=>pick(e.dataTransfer.files[0]));
+document.addEventListener('dragover',e=>e.preventDefault());
+document.addEventListener('drop',e=>{e.preventDefault();if(e.target!==drop&&!drop.contains(e.target))pick(e.dataTransfer.files[0])});
+$('tiles').addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;current=t.dataset.k;store.set('jalon',current);render();$('tools').scrollIntoView({behavior:'smooth',block:'start'})});
+$('q').addEventListener('input',render);
+$('map').value=mapText;
+$('saveMap').addEventListener('click',()=>{mapText=$('map').value;store.set('caffMap',mapText);$('mapMsg').textContent='Enregistré';render();setTimeout(()=>$('mapMsg').textContent='',2000)});
+$('resetMap').addEventListener('click',()=>{mapText=DEFAULT_MAP;$('map').value=mapText;store.set('caffMap',mapText);$('mapMsg').textContent='Liste d’origine rétablie';render()});
+if(typeof XLSX==='undefined')$('err').textContent="La bibliothèque de lecture Excel n'a pas pu se charger.";
+}
+</script>
+</body>
+</html>
