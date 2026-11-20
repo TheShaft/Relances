@@ -287,7 +287,9 @@ function load(buf){
   if(ci.poi<0||ci.caff<0){$('err').textContent="Colonnes « POI » ou « Caff » introuvables.";return}
   const rawAoa=XLSX.utils.sheet_to_json(ws,{header:1,defval:null,raw:true});
   HEAD=head.map(h=>String(h??'').trim());
-  rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]).map(([r,raw])=>({
+  // ignore les lignes de pied de tableau (Total, Filtres appliqués) et les lignes sans aucune info de dossier
+  const isFooter=r=>/^\s*(total|filtres?\s+appliqu)/i.test(String(r[ci.poi]))||(!r[ci.jal]&&!r[ci.caff]&&!(ci.com>=0&&r[ci.com]));
+  rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]&&!isFooter(r)).map(([r,raw])=>({
     raw,
     poi:String(r[ci.poi]).trim(),
     jal:(String(r[ci.jal]??'').match(/^\s*(\d{1,2})/)||[])[1]?.padStart(2,'0')||'',
