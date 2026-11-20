@@ -121,6 +121,22 @@ summary{cursor:pointer;font-weight:600;min-height:30px;display:flex;align-items:
 textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--soft);color:var(--ink);margin:10px 0}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+dialog{border:0;border-radius:14px;padding:0;width:min(640px,calc(100vw - 24px));background:var(--panel);color:var(--ink);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+dialog::backdrop{background:rgba(15,20,25,.55)}
+.mf{padding:18px 20px;display:flex;flex-direction:column;gap:14px;max-height:calc(100dvh - 40px);overflow:auto}
+.mh{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.mh h2{font-size:20px}
+.x{width:42px;padding:0}
+fieldset{border:0;padding:0;margin:0}
+legend{font-weight:600;font-size:13px;color:var(--mute);margin-bottom:6px;padding:0}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.ck{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:9px;padding:0 12px;min-height:42px;cursor:pointer;font-weight:600;font-size:14px}
+.ck:has(input:checked){border-color:var(--ink);background:var(--soft)}
+.ck input{width:18px;height:18px;margin:0;accent-color:var(--red)}
+.f{display:flex;flex-direction:column;gap:5px;font-weight:600;font-size:13px;color:var(--mute)}
+.f input,.f textarea{font:16px/1.5 Inter,sans-serif;color:var(--ink);background:var(--soft);border:1px solid var(--line);border-radius:9px;padding:9px 11px;min-height:42px;margin:0}
+.f textarea{min-height:190px;resize:vertical}
 .totop{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:15;min-height:48px;padding:0 16px;border-radius:999px;background:var(--ink);color:var(--panel);border-color:var(--ink);box-shadow:0 6px 18px rgba(15,20,25,.25)}
 .totop:hover{border-color:var(--red)}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.aside{position:static}.slist{flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:4px}.si{width:auto;flex:none;border:1px solid var(--line);grid-template-columns:auto auto}.si .meter{display:none}}
@@ -194,6 +210,22 @@ textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;
 </div></section>
 
 <button id="toTop" class="totop" aria-label="Remonter en haut de la page" hidden><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m0 0-5 5m5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Haut</span></button>
+<dialog id="mail" aria-labelledby="mTitle">
+  <form method="dialog" class="mf">
+    <header class="mh"><h2 id="mTitle">Mail de relance</h2><button class="x" value="close" aria-label="Fermer"><svg width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button></header>
+    <fieldset><legend>Jalons à inclure</legend><div class="checks" id="mJal"></div></fieldset>
+    <label class="f">Destinataire(s)<input id="mTo" type="text" placeholder="adresse@exemple.fr ; autre@exemple.fr" autocomplete="email"></label>
+    <label class="f">Objet<input id="mSub" type="text"></label>
+    <label class="f">Message<textarea id="mBody"></textarea></label>
+    <div class="row">
+      <button type="button" class="primary" id="mXls"><svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>Télécharger l'Excel<span id="mXlsN"></span></button>
+      <button type="button" id="mCopy">Copier le message</button>
+      <button type="button" id="mOpen">Ouvrir dans la messagerie</button>
+      <span class="meta" id="mMsg" role="status"></span>
+    </div>
+    <p class="meta">Téléchargez l'Excel puis joignez-le au mail : une messagerie ne permet pas de l'ajouter automatiquement. Votre signature Outlook s'ajoute comme d'habitude.</p>
+  </form>
+</dialog>
 <div id="ov" hidden><div>Déposez le fichier pour le charger</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -232,6 +264,7 @@ const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&g
 const slug=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^\w-]+/g,'_').replace(/^_|_$/g,'');
 const sid=s=>'soc-'+slug(s);
 const DL='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+const ML='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><rect x="2.5" y="4.5" width="15" height="11" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="m3 6 7 5 7-5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mapText=store.get('caffMap')||DEFAULT_MAP;
 let collapsed;try{collapsed=new Set(JSON.parse(store.get('collapsed')||'[]'))}catch(e){collapsed=new Set()}
@@ -314,7 +347,7 @@ function render(){
   $('out').innerHTML=names.length?names.map(s=>{
     const cs=lastBlocks[s],n=socs[s].n;
     const open=!collapsed.has(s);
-    return `<section class="card" id="${sid(s)}"><header class="ch"><h3><button class="tog" aria-expanded="${open}" aria-controls="${sid(s)}-b" data-soc="${esc(s)}"><svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="tn">${esc(s)}</span><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></span></button></h3><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></header><div id="${sid(s)}-b"${open?'':' hidden'}>`+
+    return `<section class="card" id="${sid(s)}"><header class="ch"><h3><button class="tog" aria-expanded="${open}" aria-controls="${sid(s)}-b" data-soc="${esc(s)}"><svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="tn">${esc(s)}</span><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></span></button></h3><div class="acts"><button class="mailb" data-soc="${esc(s)}">${ML}Mail</button><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></div></header><div id="${sid(s)}-b"${open?'':' hidden'}>`+
       cs.map(b=>`<div class="cg"><div class="cl">${esc(b.id?b.id+' Immo':(b.raw||'Caff vide'))}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</div></section>';
   }).join(''):`<div class="empty">${Q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</div>`;
 }
@@ -323,14 +356,60 @@ function render(){
 const fixDate=v=>{if(!(v instanceof Date)||isNaN(v))return v;const d=new Date(v.getTime()+432e5);return new Date(d.getFullYear(),d.getMonth(),d.getDate())};
 const safe=s=>String(s).replace(/[\\\/\?\*\[\]:]/g,' ').slice(0,31)||'Feuille';
 const today=()=>new Date().toISOString().slice(0,10);
-function sheetFor(soc){
+const caffLab=r=>{const id=caffId(r.caffRaw);return id?id+' Immo':r.caffRaw};
+function sheetFor(soc){return sheetFromItems(soc,lastBlocks[soc].flatMap(b=>b.items))}
+function sheetFromItems(soc,items){
   const data=[['Société','Caff',...HEAD]];
-  lastBlocks[soc].forEach(b=>b.items.forEach(r=>data.push([soc,b.id?b.id+' Immo':b.raw,...HEAD.map((_,i)=>fixDate(r.raw[i]??null))])));
+  items.forEach(r=>data.push([soc,caffLab(r),...HEAD.map((_,i)=>fixDate(r.raw[i]??null))]));
   const ws=XLSX.utils.aoa_to_sheet(data,{cellDates:true,dateNF:'dd/mm/yyyy'});
   ws['!cols']=data[0].map((h,i)=>({wch:Math.min(60,Math.max(10,...data.map(r=>r[i] instanceof Date?10:String(r[i]??'').length))+2)}));
   ws['!autofilter']={ref:XLSX.utils.encode_range({s:{r:0,c:0},e:{r:data.length-1,c:data[0].length-1}})};
   return ws;
 }
+// ---- Mail de relance ----
+const MAILNAME={'01':'CRVT1','04':'APD','06':'CRVT suivi','08':'CRVT RI','10':'envoi travaux','12':'DOE','13':'traitement DOE (RAR)','autre':'autres jalons'};
+const deN=n=>/^[aeiouyh]/i.test(n)?'d’'+n:'de '+n;
+const inJ=(r,k)=>k==='autre'?!JALONS.some(j=>j.k===r.jal):r.jal===k;
+let contacts;try{contacts=JSON.parse(store.get('contacts')||'{}')}catch(e){contacts={}}
+let mSoc='';
+function socRows(soc){const map=parseMap(mapText);return rows.filter(r=>(map[caffId(r.caffRaw)]||'Non attribué')===soc).sort((a,b)=>caffLab(a).localeCompare(caffLab(b)))}
+const selJ=()=>[...$('mJal').querySelectorAll('input:checked')].map(i=>i.value);
+function openMail(soc){
+  mSoc=soc;const rs=socRows(soc);
+  const opts=[...JALONS,{k:'autre',lab:'Autres'}].map(j=>({...j,n:rs.filter(r=>inJ(r,j.k)).length})).filter(j=>j.n);
+  $('mTitle').textContent='Mail de relance · '+soc;
+  $('mJal').innerHTML=opts.map(j=>`<label class="ck"><input type="checkbox" value="${j.k}"${j.k===current?' checked':''}>${esc(j.lab)}<span class="pill">${j.n}</span></label>`).join('');
+  $('mTo').value=contacts[soc]||'';$('mMsg').textContent='';
+  fillMail();$('mail').showModal();
+}
+function fillMail(){
+  const ks=selJ(),names=ks.map(k=>MAILNAME[k]);
+  const phrase=names.length?'en attente '+deN(names[0])+names.slice(1,-1).map(n=>', ceux en attente '+deN(n)).join('')+(names.length>1?' ainsi que ceux en attente '+deN(names.at(-1)):''):'en attente';
+  $('mSub').value=`Dossiers en attente${names.length?' '+names.join(' / '):''} – ${mSoc}`;
+  $('mBody').value=`Bonjour,\n\nSuite à un export réalisé depuis Power BI Orange, veuillez trouver ci-joint la liste de vos dossiers ${phrase}.\nMerci de procéder aux actions nécessaires afin de réduire ces stocks dans les meilleurs délais.\n\nCordialement,`;
+  $('mXls').disabled=!ks.length;
+  $('mXlsN').textContent=ks.length>1?`(${ks.length} onglets)`:'';
+}
+$('mJal').addEventListener('change',fillMail);
+$('mTo').addEventListener('input',()=>{contacts[mSoc]=$('mTo').value.trim();store.set('contacts',JSON.stringify(contacts))});
+$('mXls').addEventListener('click',()=>{
+  const ks=selJ();if(!ks.length)return;const rs=socRows(mSoc),wb=XLSX.utils.book_new();
+  const labOf=k=>k==='autre'?'Autres':JALONS.find(j=>j.k===k).lab;
+  ks.forEach(k=>XLSX.utils.book_append_sheet(wb,sheetFromItems(mSoc,rs.filter(r=>inJ(r,k))),safe(labOf(k))));
+  save(wb,`Relance_${slug(mSoc)}_${ks.map(k=>slug(labOf(k))).join('-')}_${today()}.xlsx`);
+});
+$('mCopy').addEventListener('click',async()=>{
+  const t=$('mBody').value;
+  try{await navigator.clipboard.writeText(t);$('mMsg').textContent='Message copié'}
+  catch(e){$('mBody').select();try{document.execCommand('copy');$('mMsg').textContent='Message copié'}catch(e2){$('mMsg').textContent='Copie impossible, sélectionnez le texte'}}
+});
+$('mOpen').addEventListener('click',()=>{
+  const enc=s=>encodeURIComponent(s.replace(/\r?\n/g,'\r\n'));
+  const to=$('mTo').value.split(/[;,\s]+/).filter(Boolean).map(encodeURIComponent).join(',');
+  const a=document.createElement('a');a.href=`mailto:${to}?subject=${enc($('mSub').value)}&body=${enc($('mBody').value)}`;a.click();
+  $('mMsg').textContent='Si rien ne s’ouvre, utilisez « Copier le message ».';
+});
+
 function save(wb,name){try{XLSX.writeFile(wb,name,{cellDates:true})}catch(e){$('err').textContent="Le téléchargement a été bloqué par le navigateur."}}
 
 // ---- Événements ----
@@ -359,6 +438,7 @@ function setOpen(s,open){
 $('out').addEventListener('click',e=>{
   const t=e.target.closest('.tog');
   if(t){setOpen(t.dataset.soc,t.getAttribute('aria-expanded')!=='true');return}
+  const m=e.target.closest('.mailb');if(m){openMail(m.dataset.soc);return}
   const b=e.target.closest('.xls');if(!b)return;
   const soc=b.dataset.soc,wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,sheetFor(soc),safe(soc));
