@@ -307,7 +307,11 @@ function load(buf){
   HEAD=head.map(h=>String(h??'').trim());
   // ignore les lignes de pied de tableau (Total, Filtres appliqués) et les lignes sans aucune info de dossier
   const isFooter=r=>/^\s*(total|filtres?\s+appliqu)/i.test(String(r[ci.poi]))||(!r[ci.jal]&&!r[ci.caff]&&!(ci.com>=0&&r[ci.com]));
-  rows=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]&&!isFooter(r)).map(([r,raw])=>({
+  // ignore les caff ENSIO et les caff sans code (nom de personne à la place)
+  const keepCaff=r=>{const c=String(r[ci.caff]??'');return !!caffId(c)&&!/ENSIO/i.test(c)};
+  const dossiers=aoa.slice(hi+1).map((r,i)=>[r,rawAoa[hi+1+i]||[]]).filter(([r])=>r[ci.poi]&&!isFooter(r));
+  const ignored=dossiers.filter(([r])=>!keepCaff(r)).length;
+  rows=dossiers.filter(([r])=>keepCaff(r)).map(([r,raw])=>({
     raw,
     poi:String(r[ci.poi]).trim(),
     jal:(J=>{const o=info[J.k];if(!o||J.num<o.num)info[J.k]=J;return J.k})(jalOf(r[ci.jal])),
@@ -317,7 +321,7 @@ function load(buf){
   const order=Object.keys(KNOWN);
   JALONS=Object.values(info).sort((a,b)=>a.num-b.num||order.indexOf(a.k)-order.indexOf(b.k));
   $('fname').textContent=fileName;
-  $('fmeta').textContent=rows.length+' dossiers · chargé à '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+  $('fmeta').textContent=rows.length+' dossiers'+(ignored?` (${ignored} ignoré${ignored>1?'s':''})`:'')+' · chargé à '+new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
   $('filebox').hidden=false;$('empty').hidden=true;$('app').hidden=false;
   render();
 }
