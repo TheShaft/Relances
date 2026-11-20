@@ -121,6 +121,8 @@ summary{cursor:pointer;font-weight:600;min-height:30px;display:flex;align-items:
 textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;border:1px solid var(--line);border-radius:9px;padding:10px;background:var(--soft);color:var(--ink);margin:10px 0}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 
+.totop{position:fixed;right:max(18px,env(safe-area-inset-right));bottom:max(18px,env(safe-area-inset-bottom));z-index:15;min-height:48px;padding:0 16px;border-radius:999px;background:var(--ink);color:var(--panel);border-color:var(--ink);box-shadow:0 6px 18px rgba(15,20,25,.25)}
+.totop:hover{border-color:var(--red)}
 @media(max-width:900px){.grid{grid-template-columns:minmax(0,1fr)}.aside{position:static}.slist{flex-direction:row;overflow-x:auto;max-height:none;padding-bottom:4px}.si{width:auto;flex:none;border:1px solid var(--line);grid-template-columns:auto auto}.si .meter{display:none}}
 @media(max-width:600px){.brand small{display:none}.pipe{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.tile{min-height:80px;padding:10px}.tile .n{font-size:24px}.tile .lab{font-size:12.5px}.fi{text-align:left}#fname{max-width:170px}.ch,.cl{padding-inline:14px}
  table{font-size:13px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 14px;padding-inline-start:calc(14px + 7em);text-align:start;width:auto}.stack td::before{content:attr(data-l);float:inline-start;width:6.5em;margin-inline-start:-7em;white-space:normal;color:var(--mute);font-weight:500}.stack td:empty{display:none}}
@@ -191,6 +193,7 @@ textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;
   </details>
 </div></section>
 
+<button id="toTop" class="totop" aria-label="Remonter en haut de la page" hidden><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 16V4m0 0-5 5m5-5 5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span>Haut</span></button>
 <div id="ov" hidden><div>Déposez le fichier pour le charger</div></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -366,6 +369,9 @@ $('allXls').addEventListener('click',()=>{
   Object.keys(lastBlocks).forEach(s=>XLSX.utils.book_append_sheet(wb,sheetFor(s),safe(s)));
   save(wb,`Relances_${slug(lastLab)}_${today()}.xlsx`);
 });
+const onScroll=()=>{$('toTop').hidden=scrollY<500};
+addEventListener('scroll',onScroll,{passive:true});onScroll();
+$('toTop').addEventListener('click',()=>{scrollTo({top:0,behavior:reduce?'auto':'smooth'});$('tiles').querySelector('.tile.on')?.focus({preventScroll:true})});
 $('openMap').addEventListener('click',()=>{$('mapbox').open=true;$('mapbox').scrollIntoView({behavior:reduce?'auto':'smooth'})});
 $('map').value=mapText;
 $('saveMap').addEventListener('click',()=>{mapText=$('map').value;store.set('caffMap',mapText);$('mapMsg').textContent='Enregistré';render();setTimeout(()=>$('mapMsg').textContent='',2000)});
