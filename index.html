@@ -82,11 +82,20 @@ button:focus-visible,input:focus-visible,textarea:focus-visible,#drop:focus-visi
 .full{width:100%;margin-top:12px}
 .aside .meta{margin:8px 2px 0}
 .toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;justify-content:space-between}
+.toolbar>div:first-child{flex:1 1 200px}
+.toolbar .row{flex:0 1 auto;justify-content:flex-end;gap:8px}
 .toolbar h1{font-size:clamp(26px,3.5vw,34px)}
-input[type=search]{font:16px Inter,sans-serif;min-height:42px;padding:0 12px 0 36px;border-radius:9px;border:1px solid var(--line);background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f9aa5' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") 12px 50%/16px no-repeat;color:var(--ink);width:min(320px,100%)}
+input[type=search]{font:16px Inter,sans-serif;min-height:42px;padding:0 12px 0 36px;border-radius:9px;border:1px solid var(--line);background:var(--panel) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='none' stroke='%238f9aa5' stroke-width='2'%3E%3Ccircle cx='7' cy='7' r='5'/%3E%3Cpath d='m11 11 4 4'/%3E%3C/svg%3E") 12px 50%/16px no-repeat;color:var(--ink);width:min(270px,100%)}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;margin-top:16px;overflow:hidden;scroll-margin-top:14px}
 .ch{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--line)}
-.ch h3{font-size:19px;margin-bottom:2px}
+.ch h3{font-size:19px;flex:1 1 220px}
+.tog{all:unset;box-sizing:border-box;display:flex;gap:10px;align-items:center;cursor:pointer;width:100%;min-height:44px;border-radius:8px;padding:2px 4px;margin-left:-4px}
+.tog:focus-visible{outline:3px solid var(--red);outline-offset:2px}
+.tog .tn{display:block;font:700 19px/1.2 "Inter Tight",sans-serif}
+.tog .meta{display:block;font:400 13px Inter,sans-serif}
+.chev{flex:none;color:var(--mute);transition:transform .15s}
+.tog[aria-expanded=false] .chev{transform:rotate(-90deg)}
+.card:has(.tog[aria-expanded=false]) .ch{border-bottom:0}
 .cg+.cg{border-top:1px solid var(--line)}
 .cl{display:flex;gap:8px;align-items:center;padding:12px 18px 6px;font-weight:600;font-size:14px}
 .pill{font-size:12.5px;font-weight:600;color:var(--mute);background:var(--chip);border-radius:999px;padding:1px 8px}
@@ -163,7 +172,10 @@ textarea{width:100%;min-height:260px;font:14px/1.5 ui-monospace,Menlo,monospace;
     <div>
       <div class="toolbar">
         <div><h1 id="title"></h1><div class="meta" id="sub"></div></div>
-        <input type="search" id="q" placeholder="Rechercher un dossier, un statut…" aria-label="Rechercher">
+        <div class="row">
+          <input type="search" id="q" placeholder="Rechercher un dossier…" aria-label="Rechercher">
+          <button id="foldAll">Tout replier</button><button id="openAll">Tout déplier</button>
+        </div>
       </div>
       <div id="out"></div>
     </div>
@@ -219,6 +231,7 @@ const sid=s=>'soc-'+slug(s);
 const DL='<svg width="16" height="16" viewBox="0 0 20 20" aria-hidden="true"><path d="M10 3v9m0 0-4-4m4 4 4-4M4 16h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let mapText=store.get('caffMap')||DEFAULT_MAP;
+let collapsed;try{collapsed=new Set(JSON.parse(store.get('collapsed')||'[]'))}catch(e){collapsed=new Set()}
 let HEAD=[],rows=[],current=store.get('jalon')||'01',fileName='',lastBlocks={},lastLab='',Q='';
 
 function parseMap(t){const m={};t.split(/\r?\n/).forEach(l=>{const p=l.split(/[;\t,]/);if(p.length>=2){const id=p[0].replace(/\D/g,'').padStart(4,'0');if(id!=='0000')m[id]=p.slice(1).join(' ').trim()}});return m}
@@ -294,11 +307,12 @@ function render(){
   $('sub').textContent=`${filt.length} dossier${filt.length>1?'s':''} · ${names.length} société${names.length>1?'s':''}${Q?' · filtrés':''}`;
   $('allXls').disabled=!names.length;
   const max=Math.max(1,...names.map(s=>socs[s].n));
-  $('slist').innerHTML=names.length?names.map(s=>`<button class="si" data-go="${sid(s)}"><span class="sn">${esc(s)}</span><span class="sc">${socs[s].n}</span><span class="meter"><i style="width:${socs[s].n/max*100}%"></i></span></button>`).join(''):'<p class="meta">Aucune société</p>';
+  $('slist').innerHTML=names.length?names.map(s=>`<button class="si" data-go="${sid(s)}" data-soc="${esc(s)}"><span class="sn">${esc(s)}</span><span class="sc">${socs[s].n}</span><span class="meter"><i style="width:${socs[s].n/max*100}%"></i></span></button>`).join(''):'<p class="meta">Aucune société</p>';
   $('out').innerHTML=names.length?names.map(s=>{
     const cs=lastBlocks[s],n=socs[s].n;
-    return `<section class="card" id="${sid(s)}"><header class="ch"><div><h3>${esc(s)}</h3><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></div><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></header>`+
-      cs.map(b=>`<div class="cg"><div class="cl">${esc(b.id?b.id+' Immo':(b.raw||'Caff vide'))}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</section>';
+    const open=!collapsed.has(s);
+    return `<section class="card" id="${sid(s)}"><header class="ch"><h3><button class="tog" aria-expanded="${open}" aria-controls="${sid(s)}-b" data-soc="${esc(s)}"><svg class="chev" width="18" height="18" viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span><span class="tn">${esc(s)}</span><span class="meta">${n} dossier${n>1?'s':''} · ${cs.length} caff</span></span></button></h3><button class="xls" data-soc="${esc(s)}">${DL}Excel relance</button></header><div id="${sid(s)}-b"${open?'':' hidden'}>`+
+      cs.map(b=>`<div class="cg"><div class="cl">${esc(b.id?b.id+' Immo':(b.raw||'Caff vide'))}<span class="pill">${b.items.length}</span></div><table class="stack"><thead><tr><th>Dossier</th><th>Date COML</th><th>Statut</th><th>Détail</th></tr></thead><tbody>${b.items.map(row).join('')}</tbody></table></div>`).join('')+'</div></section>';
   }).join(''):`<div class="empty">${Q?'Aucun dossier ne correspond à la recherche.':'Aucun dossier pour ce jalon.'}</div>`;
 }
 
@@ -329,9 +343,19 @@ document.addEventListener('dragleave',()=>{dragN=Math.max(0,dragN-1);if(!dragN)$
 document.addEventListener('dragover',e=>e.preventDefault());
 document.addEventListener('drop',e=>{e.preventDefault();dragN=0;$('ov').hidden=true;pick(e.dataTransfer?.files[0])});
 $('tiles').addEventListener('click',e=>{const t=e.target.closest('.tile');if(!t)return;current=t.dataset.k;store.set('jalon',current);render()});
-$('slist').addEventListener('click',e=>{const b=e.target.closest('.si');if(b)$(b.dataset.go)?.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})});
+$('slist').addEventListener('click',e=>{const b=e.target.closest('.si');if(!b)return;if(collapsed.has(b.dataset.soc))setOpen(b.dataset.soc,true);const c=$(b.dataset.go);if(c){c.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'});c.querySelector('.tog')?.focus({preventScroll:true})}});
+$('foldAll').addEventListener('click',()=>{Object.keys(lastBlocks).forEach(s=>setOpen(s,false))});
+$('openAll').addEventListener('click',()=>{Object.keys(lastBlocks).forEach(s=>setOpen(s,true))});
 $('q').addEventListener('input',render);
+function setOpen(s,open){
+  open?collapsed.delete(s):collapsed.add(s);
+  store.set('collapsed',JSON.stringify([...collapsed]));
+  const t=document.querySelector(`#${CSS.escape(sid(s))} .tog`);
+  if(t){t.setAttribute('aria-expanded',open);$(sid(s)+'-b').hidden=!open}
+}
 $('out').addEventListener('click',e=>{
+  const t=e.target.closest('.tog');
+  if(t){setOpen(t.dataset.soc,t.getAttribute('aria-expanded')!=='true');return}
   const b=e.target.closest('.xls');if(!b)return;
   const soc=b.dataset.soc,wb=XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb,sheetFor(soc),safe(soc));
